@@ -297,9 +297,6 @@ async def handle_call_tool(
         elif person_id:
             notes["name"] = person_id
 
-        # Notify clients that resources have changed
-        await server.request_context.session.send_resource_list_changed()
-
         # Execute the appropriate tool
         if name == "search-imdb":
             results = await search_imdb(query, content_type, limit)
