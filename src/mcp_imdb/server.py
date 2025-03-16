@@ -264,11 +264,9 @@ async def handle_call_tool(
     Tools can modify server state and notify clients of changes.
     """
     try:
-        if name not in ["search-imdb", "get-movie-details", "get-trending-movies", "get-actor-details", "search-people"]:
+        if name not in ["search-imdb", "get-movie-details", "get-actor-details", "search-people"]:
             raise ValueError(f"Unknown tool: {name}")
 
-        if not arguments and name != "get-trending-movies":
-            raise ValueError("Missing arguments")
 
         # Extract query parameter based on tool name
         query = None
@@ -282,8 +280,6 @@ async def handle_call_tool(
             limit = int(arguments.get("limit", 10))
         elif name == "get-movie-details":
             query = arguments.get("imdb_id")
-        elif name == "get-trending-movies":
-            limit = int(arguments.get("limit", 10)) if arguments else 10
         elif name == "get-actor-details":
             person_id = arguments.get("person_id")
         elif name == "search-people":
@@ -291,7 +287,7 @@ async def handle_call_tool(
             limit = int(arguments.get("limit", 10))
 
         # Validate required parameters
-        if (not query and name not in ["get-trending-movies", "get-actor-details"]) or \
+        if (not query and name not in ["get-actor-details"]) or \
            (not person_id and name == "get-actor-details"):
             raise ValueError(f"Missing required parameter for {name}")
 
