@@ -26,7 +26,7 @@ The server implements one tool:
 
 ## Configuration
 
-The server supports two transport protocols that can be selected via the
+The server supports multiple transport protocols that can be selected via the
 `MCP_TRANSPORT` environment variable:
 
 - `STDIO` (default) – communicate over standard input/output. This is the
@@ -34,11 +34,20 @@ The server supports two transport protocols that can be selected via the
 - `HTTP` – start the server as a Streamable HTTP service. When enabled the
   server listens on the port specified by the `PORT` environment variable
   (default `8000`).
+- `SSE` – expose a Server-Sent Events endpoint at `/sse` with a companion
+  `/messages/` POST endpoint. The server listens on the `PORT` environment
+  variable (default `8000`).
 
 Example for running the server over HTTP:
 
 ```bash
 MCP_TRANSPORT=HTTP PORT=8000 uv run mcp-imdb
+```
+
+Example for running the server over SSE:
+
+```bash
+MCP_TRANSPORT=SSE PORT=8000 uv run mcp-imdb
 ```
 
 ## Quickstart
