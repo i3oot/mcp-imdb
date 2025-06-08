@@ -8,7 +8,9 @@ from pydantic import AnyUrl
 import mcp.server.stdio
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from starlette.applications import Starlette
-from starlette.routing import Mount
+from starlette.routing import Mount, Route
+from starlette.responses import Response
+from mcp.server.sse import SseServerTransport
 import uvicorn
 import logging
 from mcp_imdb.tools import search_imdb, get_movie_details, get_actor_details, search_people
@@ -349,10 +351,12 @@ async def main() -> None:
     """Entry point for running the server.
 
     The transport protocol can be selected using the ``MCP_TRANSPORT``
-    environment variable. Supported values are ``STDIO`` (default) and
-    ``HTTP``. When ``HTTP`` is selected, the server is started using
+    environment variable. Supported values are ``STDIO`` (default), ``HTTP``
+    and ``SSE``. When ``HTTP`` is selected, the server is started using
     Streamable HTTP on the port specified by the ``PORT`` environment
-    variable (default ``8000``).
+    variable (default ``8000``). When ``SSE`` is selected, the server
+    exposes an SSE endpoint at ``/sse`` and a POST endpoint at ``/messages/``
+    for client messages.
     """
 
     transport = os.getenv("MCP_TRANSPORT", "STDIO").upper()
@@ -366,6 +370,40 @@ async def main() -> None:
         app = Starlette(
             routes=[Mount("/", app=handle_streamable_http)],
             lifespan=lambda starlette_app: session_manager.run(),
+        )
+
+        config = uvicorn.Config(
+            app,
+            host="0.0.0.0",
+            port=int(os.getenv("PORT", "8000")),
+            log_level="info",
+        )
+        server_obj = uvicorn.Server(config)
+        await server_obj.serve()
+    elif transport == "SSE":
+        sse = SseServerTransport("/messages/")
+
+        async def handle_sse(scope, receive, send):
+            async with sse.connect_sse(scope, receive, send) as (read_stream, write_stream):
+                await server.run(
+                    read_stream,
+                    write_stream,
+                    InitializationOptions(
+                        server_name="mcp-imdb",
+                        server_version="0.1.0",
+                        capabilities=server.get_capabilities(
+                            notification_options=NotificationOptions(),
+                            experimental_capabilities={},
+                        ),
+                    ),
+                )
+            return Response()
+
+        app = Starlette(
+            routes=[
+                Route("/sse", endpoint=handle_sse, methods=["GET"]),
+                Mount("/messages/", app=sse.handle_post_message),
+            ]
         )
 
         config = uvicorn.Config(
