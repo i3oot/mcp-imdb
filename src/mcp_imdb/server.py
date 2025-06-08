@@ -1,10 +1,15 @@
 import asyncio
 import json
+import os
 from mcp.server.models import InitializationOptions
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from pydantic import AnyUrl
 import mcp.server.stdio
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+from starlette.applications import Starlette
+from starlette.routing import Mount
+import uvicorn
 import logging
 from mcp_imdb.tools import search_imdb, get_movie_details, get_actor_details, search_people
 
@@ -340,18 +345,48 @@ async def handle_call_tool(
             )
         ]
 
-async def main():
-    # Run the server using stdin/stdout streams
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="mcp-imdb",
-                server_version="0.1.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
-            ),
+async def main() -> None:
+    """Entry point for running the server.
+
+    The transport protocol can be selected using the ``MCP_TRANSPORT``
+    environment variable. Supported values are ``STDIO`` (default) and
+    ``HTTP``. When ``HTTP`` is selected, the server is started using
+    Streamable HTTP on the port specified by the ``PORT`` environment
+    variable (default ``8000``).
+    """
+
+    transport = os.getenv("MCP_TRANSPORT", "STDIO").upper()
+
+    if transport == "HTTP":
+        session_manager = StreamableHTTPSessionManager(app=server)
+
+        async def handle_streamable_http(scope, receive, send):
+            await session_manager.handle_request(scope, receive, send)
+
+        app = Starlette(
+            routes=[Mount("/", app=handle_streamable_http)],
+            lifespan=lambda starlette_app: session_manager.run(),
         )
+
+        config = uvicorn.Config(
+            app,
+            host="0.0.0.0",
+            port=int(os.getenv("PORT", "8000")),
+            log_level="info",
+        )
+        server_obj = uvicorn.Server(config)
+        await server_obj.serve()
+    else:
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="mcp-imdb",
+                    server_version="0.1.0",
+                    capabilities=server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
+                ),
+            )

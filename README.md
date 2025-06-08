@@ -26,7 +26,20 @@ The server implements one tool:
 
 ## Configuration
 
-[TODO: Add configuration details specific to your implementation]
+The server supports two transport protocols that can be selected via the
+`MCP_TRANSPORT` environment variable:
+
+- `STDIO` (default) – communicate over standard input/output. This is the
+  transport used when running the server locally or via the included tests.
+- `HTTP` – start the server as a Streamable HTTP service. When enabled the
+  server listens on the port specified by the `PORT` environment variable
+  (default `8000`).
+
+Example for running the server over HTTP:
+
+```bash
+MCP_TRANSPORT=HTTP PORT=8000 uv run mcp-imdb
+```
 
 ## Quickstart
 
