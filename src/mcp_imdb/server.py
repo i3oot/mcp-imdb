@@ -1,17 +1,8 @@
 import asyncio
 import json
 import os
-from mcp.server.models import InitializationOptions
 import mcp.types as types
-from mcp.server import NotificationOptions, Server
-from pydantic import AnyUrl
-import mcp.server.stdio
-from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
-from starlette.applications import Starlette
-from starlette.routing import Mount, Route
-from starlette.responses import Response
-from mcp.server.sse import SseServerTransport
-import uvicorn
+from fastmcp import FastMCP
 import logging
 from mcp_imdb.tools import search_imdb, get_movie_details, get_actor_details, search_people
 
@@ -21,7 +12,7 @@ logger = logging.getLogger("mcp_imdb_server")
 # Store notes as a simple key-value dict to demonstrate state management
 notes: dict[str, str] = {}
 
-server = Server("mcp-imdb")
+server = FastMCP("mcp-imdb")
 
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
@@ -359,72 +350,12 @@ async def main() -> None:
     for client messages.
     """
 
-    transport = os.getenv("MCP_TRANSPORT", "STDIO").upper()
+    transport = os.getenv("MCP_TRANSPORT", "stdio").lower()
+    port = int(os.getenv("PORT", "8000"))
 
-    if transport == "HTTP":
-        session_manager = StreamableHTTPSessionManager(app=server)
-
-        async def handle_streamable_http(scope, receive, send):
-            await session_manager.handle_request(scope, receive, send)
-
-        app = Starlette(
-            routes=[Mount("/", app=handle_streamable_http)],
-            lifespan=lambda starlette_app: session_manager.run(),
-        )
-
-        config = uvicorn.Config(
-            app,
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", "8000")),
-            log_level="info",
-        )
-        server_obj = uvicorn.Server(config)
-        await server_obj.serve()
-    elif transport == "SSE":
-        sse = SseServerTransport("/messages/")
-
-        async def handle_sse(scope, receive, send):
-            async with sse.connect_sse(scope, receive, send) as (read_stream, write_stream):
-                await server.run(
-                    read_stream,
-                    write_stream,
-                    InitializationOptions(
-                        server_name="mcp-imdb",
-                        server_version="0.1.0",
-                        capabilities=server.get_capabilities(
-                            notification_options=NotificationOptions(),
-                            experimental_capabilities={},
-                        ),
-                    ),
-                )
-            return Response()
-
-        app = Starlette(
-            routes=[
-                Route("/sse", endpoint=handle_sse, methods=["GET"]),
-                Mount("/messages/", app=sse.handle_post_message),
-            ]
-        )
-
-        config = uvicorn.Config(
-            app,
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", "8000")),
-            log_level="info",
-        )
-        server_obj = uvicorn.Server(config)
-        await server_obj.serve()
+    if transport == "http":
+        await server.run_async("streamable-http", host="0.0.0.0", port=port)
+    elif transport == "sse":
+        await server.run_async("sse", host="0.0.0.0", port=port)
     else:
-        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-            await server.run(
-                read_stream,
-                write_stream,
-                InitializationOptions(
-                    server_name="mcp-imdb",
-                    server_version="0.1.0",
-                    capabilities=server.get_capabilities(
-                        notification_options=NotificationOptions(),
-                        experimental_capabilities={},
-                    ),
-                ),
-            )
+        await server.run_async("stdio")

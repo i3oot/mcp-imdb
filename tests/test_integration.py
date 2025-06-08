@@ -1,16 +1,12 @@
 import pytest
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from fastmcp.client.client import ClientSession
+from fastmcp.client.transports import StdioTransport
 
 @pytest.mark.asyncio
 async def test_server_integration():
-    server_params = StdioServerParameters(
-        command="uv",
-        args=["run", "mcp-imdb"]
-    )
-    
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
+    transport = StdioTransport(command="uv", args=["run", "mcp-imdb"])
+
+    async with transport.connect_session() as session:
             # Test initialization
             await session.initialize()
             
