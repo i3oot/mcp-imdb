@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Install Python dependencies first for better cache utilization
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir mcp>=1.3.0 fastapi Cinemagoer
+    && pip install --no-cache-dir fastmcp fastapi Cinemagoer
 
 # Copy application code
 COPY src ./src

@@ -1,17 +1,16 @@
 import asyncio
-import os
 import logging
 import signal
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from fastmcp.client.client import ClientSession
+from fastmcp.client.transports import StdioTransport
 
 # Constants
 TOOL_TIMEOUT = 30.0  # seconds
 
-server_params = StdioServerParameters(
-    command="uv", # Executable
-    args=["run", "mcp-imdb"], # Optional command line arguments
-    env=None # Optional environment variables
+transport = StdioTransport(
+    command="uv",
+    args=["run", "mcp-imdb"],
+    env=None,
 )
 
 # Set up logging
@@ -29,8 +28,7 @@ async def run():
     logger.info("Starting MCP client test")
     
     # Start the MCP client
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
+    async with transport.connect_session() as session:
 
             # Initialize the connection
             await session.initialize()
