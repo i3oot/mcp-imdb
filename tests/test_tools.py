@@ -3,6 +3,7 @@ from mcp_imdb.tools import (
     search_imdb,
     get_movie_details,
     get_actor_details,
+    get_person_filmography,
     search_people,
     normalize_imdb_id,
     normalize_person_id
@@ -73,4 +74,10 @@ def sample_person_id():
 
 @pytest.fixture
 def sample_search_query():
-    return "Inception" 
+    return "Inception"
+
+
+@pytest.mark.asyncio
+async def test_get_person_filmography():
+    films = await get_person_filmography("nm0000138")
+    assert any("Inception" in film.get("title", "") for film in films)

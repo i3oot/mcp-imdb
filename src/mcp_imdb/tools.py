@@ -132,6 +132,9 @@ class ActorDetails(BaseModel):
 # Cache for actor details
 actor_details_cache = {}
 
+# Cache for filmography lookups
+person_filmography_cache = {}
+
 # Helper functions
 def normalize_imdb_id(imdb_id: str) -> str:
     """
@@ -514,6 +517,63 @@ async def get_actor_details(person_id: str) -> ActorDetails:
     except Exception as e:
         # Pass through the exception from fetch_actor_details
         logger.error(f"Error in get_actor_details: {str(e)}")
+        raise
+
+async def fetch_person_filmography(person_id: str, limit_per_category: int = 5) -> List[Dict[str, Any]]:
+    """Fetch a person's filmography from IMDb."""
+    logger.info(f"Fetching filmography for person ID: {person_id}")
+
+    normalized_id = normalize_person_id(person_id)
+    numeric_id = normalized_id[2:]
+
+    try:
+        loop = asyncio.get_running_loop()
+        person = await loop.run_in_executor(
+            None,
+            lambda: ia.get_person(numeric_id, info=['filmography'])
+        )
+
+        if not person:
+            raise ValueError(f"Person with ID {person_id} not found")
+
+        filmography: List[Dict[str, Any]] = []
+        for job_category in person.get('filmography', {}):
+            movies = person.get('filmography', {}).get(job_category, [])
+            for movie in movies[:limit_per_category]:
+                movie_id = movie.getID() if hasattr(movie, 'getID') else None
+                imdb_url = get_imdb_url(f"tt{movie_id}") if movie_id else None
+                filmography.append({
+                    'title': movie.get('title', ''),
+                    'year': str(movie.get('year', '')) if movie.get('year') else None,
+                    'role': job_category,
+                    'url': imdb_url,
+                })
+
+        return filmography
+    except Exception as e:
+        logger.error(f"Error fetching filmography: {str(e)}")
+        raise RuntimeError(f"Failed to fetch filmography for {person_id}: {str(e)}")
+
+
+async def get_person_filmography(person_id: str) -> List[Dict[str, Any]]:
+    """Get a person's filmography with caching."""
+    normalized_id = normalize_person_id(person_id)
+
+    if normalized_id in person_filmography_cache:
+        logger.info(f"Returning cached filmography for person ID: {normalized_id}")
+        return person_filmography_cache[normalized_id]
+
+    try:
+        filmography = await fetch_person_filmography(normalized_id)
+
+        if len(person_filmography_cache) >= 100:
+            person_filmography_cache.pop(next(iter(person_filmography_cache)))
+
+        person_filmography_cache[normalized_id] = filmography
+
+        return filmography
+    except Exception as e:
+        logger.error(f"Error in get_person_filmography: {str(e)}")
         raise
 
 class PersonSearchResult(BaseModel):
