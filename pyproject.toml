@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "A Model Context Protocol (MCP) server for accessing IMDB data"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [ "fastmcp>=2.7.1",]
+dependencies = [
+    "fastmcp>=2.7.1",
+    "cinemagoer @ git+https://github.com/cinemagoer/cinemagoer",
+    "fastapi",
+]
 [[project.authors]]
 name = "Cheng-Lung Sung"
 email = "clsung@gmail.com"
@@ -20,3 +24,6 @@ mcp-imdb = "mcp_imdb:main"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
