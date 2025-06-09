@@ -613,3 +613,230 @@ async def search_people(query: str, limit: int = 10) -> PersonSearchResponse:
     except Exception as e:
         logger.error(f"Error searching IMDb for people: {str(e)}")
         raise RuntimeError(f"Failed to search IMDb for people: {str(e)}")
+
+async def get_top_movies(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb Top 250 movies."""
+    logger.info("Fetching IMDb Top 250 movies")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_top250_movies)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(SearchResult(
+                title=movie.get('title', 'Unknown Title'),
+                url=get_imdb_url(imdb_id),
+                year=year,
+                rating=rating,
+                description=None,
+                imdb_id=imdb_id,
+            ))
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching top movies: {str(e)}")
+        raise RuntimeError(f"Failed to fetch top movies: {str(e)}")
+
+async def get_top_tv(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb Top 250 TV shows."""
+    logger.info("Fetching IMDb Top 250 TV shows")
+    try:
+        loop = asyncio.get_running_loop()
+        shows = await loop.run_in_executor(None, ia.get_top250_tv)
+        results = []
+        for show in shows[:limit]:
+            imdb_id = normalize_imdb_id(show.movieID)
+            year = str(show.get('year')) if show.get('year') else None
+            rating = str(show.get('rating')) if show.get('rating') else None
+            results.append(SearchResult(
+                title=show.get('title', 'Unknown Title'),
+                url=get_imdb_url(imdb_id),
+                year=year,
+                rating=rating,
+                description=None,
+                imdb_id=imdb_id,
+            ))
+        return SearchResponse(results=results, total_results=len(shows))
+    except Exception as e:
+        logger.error(f"Error fetching top TV shows: {str(e)}")
+        raise RuntimeError(f"Failed to fetch top TV shows: {str(e)}")
+
+async def get_popular_movies(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb popular movies."""
+    logger.info("Fetching IMDb popular movies")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_popular100_movies)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(SearchResult(
+                title=movie.get('title', 'Unknown Title'),
+                url=get_imdb_url(imdb_id),
+                year=year,
+                rating=rating,
+                description=None,
+                imdb_id=imdb_id,
+            ))
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching popular movies: {str(e)}")
+        raise RuntimeError(f"Failed to fetch popular movies: {str(e)}")
+
+async def get_popular_tv(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb popular TV shows."""
+    logger.info("Fetching IMDb popular TV shows")
+    try:
+        loop = asyncio.get_running_loop()
+        shows = await loop.run_in_executor(None, ia.get_popular100_tv)
+        results = []
+        for show in shows[:limit]:
+            imdb_id = normalize_imdb_id(show.movieID)
+            year = str(show.get('year')) if show.get('year') else None
+            rating = str(show.get('rating')) if show.get('rating') else None
+            results.append(SearchResult(
+                title=show.get('title', 'Unknown Title'),
+                url=get_imdb_url(imdb_id),
+                year=year,
+                rating=rating,
+                description=None,
+                imdb_id=imdb_id,
+            ))
+        return SearchResponse(results=results, total_results=len(shows))
+    except Exception as e:
+        logger.error(f"Error fetching popular TV shows: {str(e)}")
+        raise RuntimeError(f"Failed to fetch popular TV shows: {str(e)}")
+
+async def get_bottom_movies(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb Bottom 100 movies."""
+    logger.info("Fetching IMDb Bottom 100 movies")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_bottom100_movies)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(
+                SearchResult(
+                    title=movie.get('title', 'Unknown Title'),
+                    url=get_imdb_url(imdb_id),
+                    year=year,
+                    rating=rating,
+                    description=None,
+                    imdb_id=imdb_id,
+                )
+            )
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching bottom movies: {str(e)}")
+        raise RuntimeError(f"Failed to fetch bottom movies: {str(e)}")
+
+async def get_top_indian_movies(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb Top 250 Indian movies."""
+    logger.info("Fetching IMDb Top 250 Indian movies")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_top250_indian_movies)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(
+                SearchResult(
+                    title=movie.get('title', 'Unknown Title'),
+                    url=get_imdb_url(imdb_id),
+                    year=year,
+                    rating=rating,
+                    description=None,
+                    imdb_id=imdb_id,
+                )
+            )
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching top Indian movies: {str(e)}")
+        raise RuntimeError(f"Failed to fetch top Indian movies: {str(e)}")
+
+async def get_boxoffice_movies(limit: int = 10) -> SearchResponse:
+    """Fetch IMDb top box office movies."""
+    logger.info("Fetching IMDb box office movies")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_boxoffice_movies)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(
+                SearchResult(
+                    title=movie.get('title', 'Unknown Title'),
+                    url=get_imdb_url(imdb_id),
+                    year=year,
+                    rating=rating,
+                    description=None,
+                    imdb_id=imdb_id,
+                )
+            )
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching box office movies: {str(e)}")
+        raise RuntimeError(f"Failed to fetch box office movies: {str(e)}")
+
+async def get_top_movies_by_genres(genres: str | list[str], limit: int = 10) -> SearchResponse:
+    """Fetch top movies filtered by genres."""
+    logger.info(f"Fetching IMDb top movies for genres: {genres}")
+    try:
+        loop = asyncio.get_running_loop()
+        movies = await loop.run_in_executor(None, ia.get_top50_movies_by_genres, genres)
+        results = []
+        for movie in movies[:limit]:
+            imdb_id = normalize_imdb_id(movie.movieID)
+            year = str(movie.get('year')) if movie.get('year') else None
+            rating = str(movie.get('rating')) if movie.get('rating') else None
+            results.append(
+                SearchResult(
+                    title=movie.get('title', 'Unknown Title'),
+                    url=get_imdb_url(imdb_id),
+                    year=year,
+                    rating=rating,
+                    description=None,
+                    imdb_id=imdb_id,
+                )
+            )
+        return SearchResponse(results=results, total_results=len(movies))
+    except Exception as e:
+        logger.error(f"Error fetching top movies by genres: {str(e)}")
+        raise RuntimeError(f"Failed to fetch top movies by genres: {str(e)}")
+
+async def get_top_tv_by_genres(genres: str | list[str], limit: int = 10) -> SearchResponse:
+    """Fetch top TV shows filtered by genres."""
+    logger.info(f"Fetching IMDb top TV shows for genres: {genres}")
+    try:
+        loop = asyncio.get_running_loop()
+        shows = await loop.run_in_executor(None, ia.get_top50_tv_by_genres, genres)
+        results = []
+        for show in shows[:limit]:
+            imdb_id = normalize_imdb_id(show.movieID)
+            year = str(show.get('year')) if show.get('year') else None
+            rating = str(show.get('rating')) if show.get('rating') else None
+            results.append(
+                SearchResult(
+                    title=show.get('title', 'Unknown Title'),
+                    url=get_imdb_url(imdb_id),
+                    year=year,
+                    rating=rating,
+                    description=None,
+                    imdb_id=imdb_id,
+                )
+            )
+        return SearchResponse(results=results, total_results=len(shows))
+    except Exception as e:
+        logger.error(f"Error fetching top TV shows by genres: {str(e)}")
+        raise RuntimeError(f"Failed to fetch top TV shows by genres: {str(e)}")
+
